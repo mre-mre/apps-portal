@@ -1,4 +1,5 @@
 // Generates icon-192.png and icon-512.png for Apps Portal PWA
+// Design: node network — glowing hub with 6 satellite nodes connected by lines
 // Run: node generate-icons.js
 
 const zlib = require('zlib');
@@ -40,110 +41,170 @@ function writePNG(filename, size, draw) {
 
   const raw = [];
   for (let y = 0; y < size; y++) {
-    raw.push(0); // filter: none
+    raw.push(0);
     for (let x = 0; x < size; x++) {
       raw.push(...draw(x, y, size));
     }
   }
   const idat = zlib.deflateSync(Buffer.from(raw), { level: 9 });
-
-  const png = Buffer.concat([
-    sig,
-    chunk('IHDR', ihdr),
-    chunk('IDAT', idat),
-    chunk('IEND', Buffer.alloc(0)),
-  ]);
+  const png = Buffer.concat([sig, chunk('IHDR', ihdr), chunk('IDAT', idat), chunk('IEND', Buffer.alloc(0))]);
   fs.writeFileSync(path.join(__dirname, filename), png);
   console.log(`✓ ${filename} (${size}x${size})`);
 }
 
-// --- Design helpers ---
+// --- Math helpers ---
 
 function lerp(a, b, t) { return a + (b - a) * t; }
+function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
 
-// Hex to RGB
-function hex(h) {
-  return [parseInt(h.slice(1,3),16), parseInt(h.slice(3,5),16), parseInt(h.slice(5,7),16)];
-}
-
-const BG     = hex('#0f1117');
-const ACCENT = hex('#5c7cfa');
-const ACCENT2= hex('#38bdf8');
-
-// Smooth step
 function smoothstep(edge0, edge1, x) {
-  const t = Math.max(0, Math.min(1, (x - edge0) / (edge1 - edge0)));
+  const t = clamp((x - edge0) / (edge1 - edge0), 0, 1);
   return t * t * (3 - 2 * t);
 }
 
-// Rounded rect SDF (signed distance function)
 function roundedRectSDF(px, py, cx, cy, w, h, r) {
   const qx = Math.abs(px - cx) - w / 2 + r;
   const qy = Math.abs(py - cy) - h / 2 + r;
   return Math.sqrt(Math.max(qx, 0) ** 2 + Math.max(qy, 0) ** 2) + Math.min(Math.max(qx, qy), 0) - r;
 }
 
-function drawIcon(x, y, size) {
-  const aa = 1.5; // anti-alias width in pixels
+function capsuleSDF(px, py, ax, ay, bx, by) {
+  const abx = bx - ax, aby = by - ay;
+  const apx = px - ax, apy = py - ay;
+  const len2 = abx * abx + aby * aby;
+  const t = len2 > 0 ? clamp((apx * abx + apy * aby) / len2, 0, 1) : 0;
+  const rx = apx - abx * t, ry = apy - aby * t;
+  return Math.sqrt(rx * rx + ry * ry);
+}
 
-  // Normalized coords [-1, 1]
+function lerpColor(a, b, t) {
+  return [lerp(a[0], b[0], t), lerp(a[1], b[1], t), lerp(a[2], b[2], t)];
+}
+
+// --- Color palette ---
+
+const BG     = [10, 14, 26];       // deep navy #0a0e1a
+const INDIGO = [99, 102, 241];     // #6366f1
+const CYAN   = [34, 211, 238];     // #22d3ee
+
+// --- Draw function ---
+
+function drawIcon(x, y, size) {
+  const aa = 1.5;
+
+  // iOS-style rounded rect canvas
+  const outerR = 0.22 * size;
+  const outerSDF = roundedRectSDF(x, y, size / 2, size / 2, size, size, outerR);
+  if (outerSDF > aa) return BG;
+
+  // Background with subtle center glow
   const nx = (x / size) * 2 - 1;
   const ny = (y / size) * 2 - 1;
+  const bgDist = Math.sqrt(nx * nx + ny * ny);
+  const bgGlow = Math.max(0, 1 - bgDist * 0.75) * 0.12;
+  let fr = BG[0] + bgGlow * 50;
+  let fg = BG[1] + bgGlow * 65;
+  let fb = BG[2] + bgGlow * 110;
 
-  // --- Background ---
-  // Outer rounded rect (canvas shape)
-  const outerR = 0.22 * size;
-  const outerSDF = roundedRectSDF(x, y, size/2, size/2, size, size, outerR);
-  if (outerSDF > aa) return BG; // outside — transparent region rendered as bg
+  // Satellite node positions (hexagonal, top node at 12 o'clock)
+  const cx = size / 2, cy = size / 2;
+  const orbitR = size * 0.31;
+  const NUM = 6;
+  const sats = [];
+  for (let i = 0; i < NUM; i++) {
+    const angle = (i / NUM) * Math.PI * 2 - Math.PI / 2;
+    const t = i / (NUM - 1);
+    sats.push({
+      x: cx + Math.cos(angle) * orbitR,
+      y: cy + Math.sin(angle) * orbitR,
+      color: lerpColor(INDIGO, CYAN, t),
+      r: size * 0.048,
+    });
+  }
+  const centerR = size * 0.072;
 
-  let r = BG[0], g = BG[1], b = BG[2];
-
-  // Subtle radial gradient on background
-  const dist = Math.sqrt(nx * nx + ny * ny);
-  const bgLight = 0.06 * (1 - Math.min(dist, 1));
-  r = Math.min(255, Math.round(BG[0] + bgLight * 255));
-  g = Math.min(255, Math.round(BG[1] + bgLight * 255));
-  b = Math.min(255, Math.round(BG[2] + bgLight * 255));
-
-  // --- 2x2 Grid of rounded squares ---
-  const gap   = 0.12 * size;
-  const sqSize = (size - gap * 3) / 2; // cell size
-  const sqR   = sqSize * 0.22;         // cell radius
-
-  const cells = [
-    { cx: gap + sqSize/2,           cy: gap + sqSize/2           },
-    { cx: gap*2 + sqSize*1.5,       cy: gap + sqSize/2           },
-    { cx: gap + sqSize/2,           cy: gap*2 + sqSize*1.5       },
-    { cx: gap*2 + sqSize*1.5,       cy: gap*2 + sqSize*1.5       },
-  ];
-
-  let closestD = Infinity;
-  let closestIdx = -1;
-  for (let i = 0; i < cells.length; i++) {
-    const d = roundedRectSDF(x, y, cells[i].cx, cells[i].cy, sqSize, sqSize, sqR);
-    if (d < closestD) { closestD = d; closestIdx = i; }
+  // 1. Line glows — broad, soft, additive
+  for (const s of sats) {
+    const d = capsuleSDF(x, y, cx, cy, s.x, s.y);
+    const glowW = size * 0.07;
+    const a = Math.max(0, 1 - d / glowW) ** 2 * 0.28;
+    fr += s.color[0] * a;
+    fg += s.color[1] * a;
+    fb += s.color[2] * a;
   }
 
-  // Per-cell gradient blend position (diagonal)
-  const blendPositions = [0.0, 0.33, 0.66, 1.0];
-  const t = blendPositions[closestIdx];
-
-  const cr = Math.round(lerp(ACCENT[0], ACCENT2[0], t));
-  const cg = Math.round(lerp(ACCENT[1], ACCENT2[1], t));
-  const cb = Math.round(lerp(ACCENT[2], ACCENT2[2], t));
-
-  // Alpha via smoothstep for anti-aliasing
-  const alpha = 1 - smoothstep(-aa, aa, closestD);
-  if (alpha > 0) {
-    r = Math.round(lerp(r, cr, alpha));
-    g = Math.round(lerp(g, cg, alpha));
-    b = Math.round(lerp(b, cb, alpha));
+  // 2. Line cores — thin, alpha composite
+  for (const s of sats) {
+    const d = capsuleSDF(x, y, cx, cy, s.x, s.y);
+    const lw = size * 0.009;
+    const a = (1 - smoothstep(-aa, aa, d - lw)) * 0.72;
+    fr = lerp(fr, s.color[0], a);
+    fg = lerp(fg, s.color[1], a);
+    fb = lerp(fb, s.color[2], a);
   }
+
+  // 3. Satellite node glows — additive
+  for (const s of sats) {
+    const dx = x - s.x, dy = y - s.y;
+    const d = Math.sqrt(dx * dx + dy * dy);
+    const glowW = s.r * 4.0;
+    const a = Math.max(0, 1 - d / glowW) ** 2 * 0.65;
+    fr += s.color[0] * a;
+    fg += s.color[1] * a;
+    fb += s.color[2] * a;
+  }
+
+  // 4. Center node glow — additive, wider and brighter
+  {
+    const dx = x - cx, dy = y - cy;
+    const d = Math.sqrt(dx * dx + dy * dy);
+    const glowW = centerR * 5.5;
+    const a = Math.max(0, 1 - d / glowW) ** 1.5 * 0.75;
+    fr += 140 * a;
+    fg += 180 * a;
+    fb += 255 * a;
+  }
+
+  // 5. Satellite node cores — solid circles with inner highlight
+  for (const s of sats) {
+    const dx = x - s.x, dy = y - s.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    const a = 1 - smoothstep(-aa, aa, dist - s.r);
+    fr = lerp(fr, s.color[0], a);
+    fg = lerp(fg, s.color[1], a);
+    fb = lerp(fb, s.color[2], a);
+    // Inner bright spot
+    const ia = (1 - smoothstep(-aa, aa, dist - s.r * 0.38)) * 0.65;
+    fr = lerp(fr, 255, ia);
+    fg = lerp(fg, 255, ia);
+    fb = lerp(fb, 255, ia);
+  }
+
+  // 6. Center node core — larger, near-white
+  {
+    const dx = x - cx, dy = y - cy;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    const a = 1 - smoothstep(-aa, aa, dist - centerR);
+    fr = lerp(fr, 225, a);
+    fg = lerp(fg, 240, a);
+    fb = lerp(fb, 255, a);
+    // Bright core center
+    const ia = (1 - smoothstep(-aa, aa, dist - centerR * 0.38)) * 0.88;
+    fr = lerp(fr, 255, ia);
+    fg = lerp(fg, 255, ia);
+    fb = lerp(fb, 255, ia);
+  }
+
+  // Edge fade for rounded rect anti-aliasing
+  const edgeFade = 1 - smoothstep(-aa, aa, outerSDF);
+  fr = lerp(BG[0], fr, edgeFade);
+  fg = lerp(BG[1], fg, edgeFade);
+  fb = lerp(BG[2], fb, edgeFade);
 
   return [
-    Math.max(0, Math.min(255, r)),
-    Math.max(0, Math.min(255, g)),
-    Math.max(0, Math.min(255, b)),
+    clamp(Math.round(fr), 0, 255),
+    clamp(Math.round(fg), 0, 255),
+    clamp(Math.round(fb), 0, 255),
   ];
 }
 
