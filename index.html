@@ -43,31 +43,22 @@
       background-clip: text;
     }
 
-    header p {
-      color: var(--muted);
-      margin-top: 8px;
-      font-size: 0.9rem;
-    }
-
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-      gap: 20px;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
       max-width: 1100px;
       margin: 0 auto;
     }
 
+    /* カード全体 */
     .card {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 14px;
-      padding: 24px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
+      padding: 18px 20px;
+      position: relative;
       transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
-      text-decoration: none;
-      color: inherit;
     }
 
     .card:hover {
@@ -76,41 +67,81 @@
       box-shadow: 0 8px 32px rgba(92, 124, 250, 0.12);
     }
 
-    .card-header {
+    /* アイコン + アプリ名リンク */
+    .card-link {
       display: flex;
-      align-items: flex-start;
+      align-items: center;
       gap: 14px;
+      text-decoration: none;
+      color: inherit;
+      padding-right: 32px; /* ⋮ ボタン分の余白 */
     }
 
     .icon {
       width: 44px;
       height: 44px;
       border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.4rem;
       flex-shrink: 0;
+      overflow: hidden;
     }
 
-    .card-title h2 {
+    .icon img {
+      display: block;
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+    }
+
+    .card-name {
       font-size: 1rem;
       font-weight: 600;
       color: var(--text);
       line-height: 1.3;
     }
 
-    .card-title .stack {
+    /* ⋮ ボタン */
+    .detail-btn {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 1.25rem;
+      line-height: 1;
+      padding: 4px 8px;
+      border-radius: 6px;
+      transition: color 0.15s, background 0.15s;
+    }
+
+    .detail-btn:hover {
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    /* 詳細パネル（デフォルト非表示） */
+    .detail {
+      display: none;
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+    }
+
+    .detail.open {
+      display: block;
+    }
+
+    .stack {
       font-size: 0.75rem;
       color: var(--muted);
-      margin-top: 3px;
+      margin-bottom: 8px;
     }
 
     .card-desc {
       font-size: 0.85rem;
       color: var(--muted);
       line-height: 1.6;
-      flex: 1;
     }
 
   </style>
@@ -124,51 +155,53 @@
   <div class="grid">
 
     <!-- kakeibo -->
-    <a class="card" href="https://kakeibo-lemon-delta.vercel.app" target="_blank">
-      <div class="card-header">
-        <div class="icon" style="background:transparent;padding:0;overflow:hidden;"><img src="app-icons/kakeibo.png" width="44" height="44" style="border-radius:10px;display:block;"></div>
-        <div class="card-title">
-          <h2>kakeibo</h2>
-          <div class="stack">Next.js · Supabase · Gemini API · PWA</div>
-        </div>
+    <div class="card">
+      <a class="card-link" href="https://kakeibo-lemon-delta.vercel.app" target="_blank">
+        <div class="icon"><img src="app-icons/kakeibo.png" width="44" height="44"></div>
+        <span class="card-name">kakeibo</span>
+      </a>
+      <button class="detail-btn" onclick="toggleDetail(this)" aria-label="詳細">⋮</button>
+      <div class="detail">
+        <div class="stack">Next.js · Supabase · Gemini API · PWA</div>
+        <p class="card-desc">夫婦向けクラウド家計簿。レシート OCR 入力・予算管理・グラフ分析・週次バックアップに対応したスマホ向け PWA。</p>
       </div>
-      <p class="card-desc">
-        夫婦向けクラウド家計簿。レシート OCR 入力・予算管理・
-        グラフ分析・週次バックアップに対応したスマホ向け PWA。
-      </p>
-    </a>
+    </div>
 
     <!-- schedule-uploader -->
-    <a class="card" href="https://schedule-uploader.vercel.app" target="_blank">
-      <div class="card-header">
-        <div class="icon" style="background:transparent;padding:0;overflow:hidden;"><img src="app-icons/schedule-uploader.png" width="44" height="44" style="border-radius:10px;display:block;"></div>
-        <div class="card-title">
-          <h2>Schedule Uploader</h2>
-          <div class="stack">PWA · Gemini Vision · Google Calendar API</div>
-        </div>
+    <div class="card">
+      <a class="card-link" href="https://schedule-uploader.vercel.app" target="_blank">
+        <div class="icon"><img src="app-icons/schedule-uploader.png" width="44" height="44"></div>
+        <span class="card-name">Schedule Uploader</span>
+      </a>
+      <button class="detail-btn" onclick="toggleDetail(this)" aria-label="詳細">⋮</button>
+      <div class="detail">
+        <div class="stack">PWA · Gemini Vision · Google Calendar API</div>
+        <p class="card-desc">学校の予定表を写真で撮影し、AI（Gemini Vision）で読み取って Google カレンダーに自動登録するスマホ向け PWA。</p>
       </div>
-      <p class="card-desc">
-        学校の予定表を写真で撮影し、AI（Gemini Vision）で読み取って
-        Google カレンダーに自動登録するスマホ向け PWA。
-      </p>
-    </a>
+    </div>
 
     <!-- fridge-menu-app -->
-    <a class="card" href="https://fridge-menu-app.vercel.app" target="_blank">
-      <div class="card-header">
-        <div class="icon" style="background:transparent;padding:0;overflow:hidden;"><img src="app-icons/fridge-menu-app.png" width="44" height="44" style="border-radius:10px;display:block;"></div>
-        <div class="card-title">
-          <h2>Fridge Menu App</h2>
-          <div class="stack">Python / Flask · Gemini API</div>
-        </div>
+    <div class="card">
+      <a class="card-link" href="https://fridge-menu-app.vercel.app" target="_blank">
+        <div class="icon"><img src="app-icons/fridge-menu-app.png" width="44" height="44"></div>
+        <span class="card-name">Fridge Menu App</span>
+      </a>
+      <button class="detail-btn" onclick="toggleDetail(this)" aria-label="詳細">⋮</button>
+      <div class="detail">
+        <div class="stack">Python / Flask · Gemini API</div>
+        <p class="card-desc">冷蔵庫の食材を入力すると、作れるメニューを AI が提案しレシピ検索 URL を表示する Web アプリ。</p>
       </div>
-      <p class="card-desc">
-        冷蔵庫の食材を入力すると、作れるメニューを AI が提案し
-        レシピ検索 URL を表示する Web アプリ。
-      </p>
-    </a>
+    </div>
 
   </div>
+
+  <script>
+    function toggleDetail(btn) {
+      const detail = btn.parentElement.querySelector('.detail');
+      const isOpen = detail.classList.toggle('open');
+      btn.textContent = isOpen ? '✕' : '⋮';
+    }
+  </script>
 
 </body>
 </html>
