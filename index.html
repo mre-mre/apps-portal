@@ -6,6 +6,7 @@
   <title>Apps Portal</title>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#0f1117">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="apple-touch-icon" href="icon-192.png">
   <style>
     :root {
@@ -78,18 +79,48 @@
     }
 
     .icon {
-      width: 44px;
-      height: 44px;
-      border-radius: 10px;
+      width: 52px;
+      height: 52px;
+      border-radius: 13px;
       flex-shrink: 0;
       overflow: hidden;
+      transition: box-shadow 0.25s ease, transform 0.25s ease;
     }
 
     .icon img {
       display: block;
-      width: 44px;
-      height: 44px;
-      border-radius: 10px;
+      width: 52px;
+      height: 52px;
+      border-radius: 13px;
+      transition: transform 0.25s ease;
+    }
+
+    .card:hover .icon img {
+      transform: scale(1.08);
+    }
+
+    /* per-app glow: kakeibo → purple */
+    .card:nth-child(1) .icon {
+      box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.45), 0 6px 18px rgba(168, 85, 247, 0.25);
+    }
+    .card:nth-child(1):hover .icon {
+      box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.8), 0 8px 24px rgba(168, 85, 247, 0.45);
+    }
+
+    /* per-app glow: schedule-uploader → cyan */
+    .card:nth-child(2) .icon {
+      box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.45), 0 6px 18px rgba(56, 189, 248, 0.25);
+    }
+    .card:nth-child(2):hover .icon {
+      box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.8), 0 8px 24px rgba(56, 189, 248, 0.45);
+    }
+
+    /* per-app glow: fridge-menu-app → emerald */
+    .card:nth-child(3) .icon {
+      box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.45), 0 6px 18px rgba(16, 185, 129, 0.25);
+    }
+    .card:nth-child(3):hover .icon {
+      box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.8), 0 8px 24px rgba(16, 185, 129, 0.45);
     }
 
     .card-name {
