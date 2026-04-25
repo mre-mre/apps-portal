@@ -69,7 +69,7 @@ function roundedRectSDF(px, py, cx, cy, w, h, r) {
   return Math.sqrt(Math.max(qx, 0) ** 2 + Math.max(qy, 0) ** 2) + Math.min(Math.max(qx, qy), 0) - r;
 }
 
-const BG = [10, 14, 26];
+const BG = [20, 8, 55]; // #14_0837 deep violet — space/game theme
 
 // ── Motif: UFO ────────────────────────────────────────────────────────────────
 
@@ -180,10 +180,10 @@ function drawIcon(x, y, size) {
   if (outerSDF > aa) return BG;
 
   const nx = (x / size) * 2 - 1, ny = (y / size) * 2 - 1;
-  const bgGlow = Math.max(0, 1 - Math.sqrt(nx * nx + ny * ny) * 0.75) * 0.10;
-  let fr = BG[0] + bgGlow * 60;
-  let fg = BG[1] + bgGlow * 70;
-  let fb = BG[2] + bgGlow * 120;
+  const bgGlow = Math.max(0, 1 - Math.sqrt(nx * nx + ny * ny) * 0.68) * 0.28;
+  let fr = BG[0] + bgGlow * 90;
+  let fg = BG[1] + bgGlow * 40;
+  let fb = BG[2] + bgGlow * 160;
 
   [fr, fg, fb] = drawMotif(x, y, size, cx, cy, fr, fg, fb);
 
