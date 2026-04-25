@@ -34,14 +34,22 @@
       margin-bottom: 56px;
     }
 
+    @keyframes shimmer {
+      0%   { background-position: 0% 50%; }
+      100% { background-position: 300% 50%; }
+    }
+
     header h1 {
-      font-size: 2rem;
-      font-weight: 700;
-      letter-spacing: 0.05em;
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      font-size: 2.6rem;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      background: linear-gradient(135deg, #5c7cfa, #38bdf8, #a78bfa, #5c7cfa);
+      background-size: 300% 300%;
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
+      animation: shimmer 5s linear infinite;
+      filter: drop-shadow(0 0 18px rgba(92, 124, 250, 0.5));
     }
 
     .grid {
