@@ -53,6 +53,25 @@ node docs/generate-icon-<app-id>.js
 
 生成スクリプトは `docs/generate-icon-<app-id>.js` としてコミットする（再生成・変更時に使うため）。
 
+### Step 4: アプリ本体側にもファビコンを設定する（必須）
+
+ポータルだけでなく、**追加するアプリ本体の HTML にも必ずファビコンを設定する**こと。生成済みの `app-icons/<app-id>.png` をアプリ側にコピーして使用する。
+
+#### 配置・参照ルール
+
+| アプリ種別 | アイコン配置先 | HTML 記述 |
+|-----------|--------------|----------|
+| 静的 HTML / Vanilla JS | `<app>/icons/icon.png` | `<link rel="icon" type="image/png" href="icons/icon.png">` |
+| PWA（manifest 同梱） | `<app>/icons/icon-192.png` `icon-512.png` | `<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">` + `<link rel="apple-touch-icon" href="icons/icon-192.png">` |
+| Flask | `<app>/src/static/icons/icon.png` | `<link rel="icon" type="image/png" href="{{ url_for('static', filename='icons/icon.png') }}">` |
+| Next.js (App Router) | `src/app/favicon.ico`（自動配信） + `public/icons/apple-touch-icon.png` | `layout.tsx` の `<head>` 内に `<link rel="apple-touch-icon" .../>` |
+
+#### チェックリスト
+
+- [ ] `<link rel="icon">` が HTML の `<head>` 内にある
+- [ ] `<link rel="apple-touch-icon">` がある（iOS ホーム画面追加対応）
+- [ ] デプロイ後にブラウザタブでファビコンが表示されることを確認
+
 ---
 
 ## デザインシステム
