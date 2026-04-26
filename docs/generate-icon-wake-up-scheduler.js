@@ -2,7 +2,7 @@
 // Run: node docs/generate-icon-wake-up-scheduler.js
 // Output: app-icons/wake-up-scheduler.png (256x256)
 //
-// Motif: stylized alarm clock (face + two top bells + hour/minute hands)
+// Motif: clean clock face (ring + hour/minute hands — no bells)
 // Palette: Violet → Cyan (productivity / calendar印象), dark cyan BG
 
 const zlib = require('zlib');
@@ -88,10 +88,10 @@ function drawMotif(x, y, size, cx, cy, fr, fg, fb) {
   const aa = 1.5;
   const s = size / 256;
 
-  // Clock body center (slightly below center to leave room for bells)
+  // Clock body center
   const clockCx = cx;
-  const clockCy = cy + 8 * s;
-  const clockR  = 76 * s;
+  const clockCy = cy;
+  const clockR  = 84 * s;
   const dist    = Math.sqrt((x - clockCx) ** 2 + (y - clockCy) ** 2);
 
   // Outer glow
@@ -166,35 +166,6 @@ function drawMotif(x, y, size, cx, cy, fr, fg, fb) {
     fr = lerp(fr, COLOR_B[0], pinA);
     fg = lerp(fg, COLOR_B[1], pinA);
     fb = lerp(fb, COLOR_B[2], pinA);
-  }
-
-  // Two bells on top
-  const bellR = 18 * s;
-  const bellY = clockCy - clockR - 6 * s;
-  const bellOffsetX = 48 * s;
-  for (const sign of [-1, 1]) {
-    const bx = clockCx + sign * bellOffsetX;
-    const bd = Math.sqrt((x - bx) ** 2 + (y - bellY) ** 2);
-    // bell glow
-    const bg = Math.max(0, 1 - bd / (bellR * 2)) ** 2 * 0.5;
-    fr += COLOR_A[0] * bg * 0.5;
-    fg += COLOR_A[1] * bg * 0.5;
-    fb += COLOR_A[2] * bg * 0.5;
-    // bell ring
-    const bedge = Math.abs(bd - bellR) - 3 * s;
-    const ba = 1 - smoothstep(-aa, aa, bedge);
-    if (ba > 0) {
-      fr = lerp(fr, COLOR_A[0], ba * 0.9);
-      fg = lerp(fg, COLOR_A[1], ba * 0.9);
-      fb = lerp(fb, COLOR_A[2], ba * 0.9);
-    }
-    // bell inner dot
-    if (bd < 6 * s) {
-      const bca = 1 - smoothstep(0, aa, bd - 6 * s);
-      fr = lerp(fr, COLOR_B[0], bca * 0.9);
-      fg = lerp(fg, COLOR_B[1], bca * 0.9);
-      fb = lerp(fb, COLOR_B[2], bca * 0.9);
-    }
   }
 
   return [fr, fg, fb];
